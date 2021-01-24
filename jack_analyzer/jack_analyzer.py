@@ -1,7 +1,5 @@
 import os
 import sys
-import JackTokenizer
-import JackParser
 
 class JackAnalyzer:
     pass

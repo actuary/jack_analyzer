@@ -1,7 +1,14 @@
 import os
 import sys
+import re
 from enum import Enum
 
+class InvalidToken(Exception):
+    def __init(self, token):
+        self.token = token
+        self.message = f"Could not parse given token: {token}"
+        super().__init__(self.message)
+        
 class JackTokenType(Enum):
     KEYWORD = 1
     SYMBOL = 2
@@ -32,21 +39,56 @@ class JackKeyword(Enum):
     NULL = 21
     THIS = 23
 
+JACK_KEYWORDS = ["class", "constructor", "function", "method",
+                 "field", "static", "var", "int", "char",
+                 "boolean", "void", "true", "false", "null",
+                 "let", "do", "if", "else", "while", "return"]
 
+JACK_SYMBOLS = ["{", "}", "(", ")", "[", "]", ".", ",", ";",
+                "+", "-", "*", "/", "&", "|", "<", ">", "=",
+                "~"]
 
 class JackTokenizer:
+    
+    identifier_matcher = re.compile("^[a-zA-Z_][a-zA-Z0-9\_]*$")
+    
     def __init__(self, jack_filepath):
         self.jack_file = open(jack_filepath, 'r')
+        self.buffer = ""
+        if self.has_more_tokens():
+            self.advance()
+        
 
     def has_more_tokens(self):
         return True
 
     def advance(self):
+        # need to read a char, keep reading until:
+        #   - a symbol
+        #   - a keyword followed by a space
         pass
-
-    def token_type(self):
-        return JackTokenType.KEYWORD
     
+    def _set_current_token(self, token):
+        # for testing
+        self.current_token = token
+    
+    def token_type(self):
+        if self.current_token in JACK_KEYWORDS:
+            return JackTokenType.KEYWORD
+        elif self.current_token in JACK_SYMBOLS:
+            return JackTokenType.SYMBOL
+        elif self.current_token.isnumeric():
+            return JackTokenType.INT_CONST
+        elif self.current_token[0]==self.current_token[-1]=='"':
+            return JackTokenType.STRING_CONST
+        elif self._valid_identifier(self.current_token):
+            return JackTokenType.IDENTIFIER
+        else:
+            raise InvalidToken(self.current_token)
+
+    def _valid_identifier(self, token):
+        return token != "" and JackTokenizer.identifier_matcher.match(token)
+        
     def key_word(self):
         return JackKeyWord.CLASS
 
