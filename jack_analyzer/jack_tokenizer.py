@@ -66,8 +66,43 @@ class JackTokenizer:
         # need to read a char, keep reading until:
         #   - a symbol
         #   - a keyword followed by a space
-        pass
-    
+        c = self.jack_file.read(1)
+
+        # Comments
+        if c == "/":
+            c = self._advance_past_comments
+            
+        # ignore whitespace
+        while c and c.isspace():
+            c = self.jack_file.read(1)
+
+        # catch symbols
+        if c in JACK_SYMBOLS:
+            self.current_token = c
+        else:
+            # otherwise it's gotta be an identifer, const or keyword
+            # so eat that up
+            self.current_token = c
+            while c and c not in JACK_SYMBOLS and c != " ":
+                self.current_token += c                        
+
+    def _advance_past_comments(self):
+        c = self.jack_file.read(1)
+        # in-line comment
+        if c == "/":
+            # in-line comment
+            while c and c != "\n":
+                c = self.jack_file.read(1)
+
+        elif c == "*":
+            # comment until closing ignore diff between it and API comment
+            while c:
+                c = self.jack_file.read(1)
+                if c == "*" and self.jack_file.read(1) == "/":
+                    break
+
+        return c
+                    
     def _set_current_token(self, token):
         # for testing
         self.current_token = token

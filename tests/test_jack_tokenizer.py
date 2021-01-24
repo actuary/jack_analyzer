@@ -4,7 +4,7 @@ import jack_analyzer.jack_tokenizer as jt
 
 class TestJackTokenizer(unittest.TestCase):
     def setUp(self):
-        self.tokenizer = jt.JackTokenizer("C:/Temp/abc.txt")
+        self.tokenizer = jt.JackTokenizer(r"C:\Users\verno\OneDrive\Documents\nand2tetris\projects\10\ArrayTest\Main.jack")
 
     def test_tokentype_keyword(self):
         self.tokenizer._set_current_token("class")
@@ -48,7 +48,10 @@ class TestJackTokenizer(unittest.TestCase):
 
     def test_valid_identifier_wrong2(self):
         self.assertFalse(self.tokenizer._valid_identifier("abc\\3"), "Said identifier with backslash was valid")
-        
+
+    def test_tokenizer_advance(self):
+        pass
+
     def tearDown(self):
         self.tokenizer.close()
 
