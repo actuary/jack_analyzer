@@ -2,6 +2,7 @@ import os
 import sys
 import re
 from enum import Enum
+import pdb
 
 class InvalidToken(Exception):
     def __init(self, token):
@@ -54,37 +55,39 @@ class JackTokenizer:
     
     def __init__(self, jack_filepath):
         self.jack_file = open(jack_filepath, 'r')
-        self.buffer = ""
-        if self.has_more_tokens():
-            self.advance()
-        
-
+        self.is_more_tokens = True
     def has_more_tokens(self):
-        return True
+        return self.is_more_tokens
 
     def advance(self):
-        # need to read a char, keep reading until:
-        #   - a symbol
-        #   - a keyword followed by a space
         c = self.jack_file.read(1)
-
-        # Comments
         if c == "/":
-            c = self._advance_past_comments
-            
-        # ignore whitespace
-        while c and c.isspace():
-            c = self.jack_file.read(1)
-
-        # catch symbols
-        if c in JACK_SYMBOLS:
+            self._advance_past_comments()
+            self.advance()
+        elif c.isspace():
+            self.advance()
+        elif c == '"':
             self.current_token = c
-        else:
+            c = self.jack_file.read(1)
+            while c != '"':
+                self.current_token += c
+                c = self.jack_file.read(1)
+            self.current_token += c
+        # catch symbols
+        elif c in JACK_SYMBOLS:
+            self.current_token = c
+        elif c and not c.isspace():
             # otherwise it's gotta be an identifer, const or keyword
             # so eat that up
-            self.current_token = c
-            while c and c not in JACK_SYMBOLS and c != " ":
-                self.current_token += c                        
+            self.current_token = ""
+            while c and c not in JACK_SYMBOLS and not c.isspace():
+                self.current_token += c
+                c = self.jack_file.read(1)
+            if c:
+                self.jack_file.seek(self.jack_file.tell() - 1, os.SEEK_SET)
+            
+        if not c:
+            self.is_more_tokens = False
 
     def _advance_past_comments(self):
         c = self.jack_file.read(1)
@@ -93,15 +96,19 @@ class JackTokenizer:
             # in-line comment
             while c and c != "\n":
                 c = self.jack_file.read(1)
-
         elif c == "*":
             # comment until closing ignore diff between it and API comment
+            c = self.jack_file.read(1)
             while c:
-                c = self.jack_file.read(1)
-                if c == "*" and self.jack_file.read(1) == "/":
-                    break
+                if c == "*":
+                    c = self.jack_file.read(1)
+                    if c == "/":
+                        break
+                else:
+                    c = self.jack_file.read(1)
+        else:
+            self.jack_file.seek(self.jack_file.tell() - 1, os.SEEK_SET)
 
-        return c
                     
     def _set_current_token(self, token):
         # for testing

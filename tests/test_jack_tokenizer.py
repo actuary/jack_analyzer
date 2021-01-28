@@ -1,6 +1,6 @@
 import unittest
 import jack_analyzer.jack_tokenizer as jt
-
+import pdb
 
 class TestJackTokenizer(unittest.TestCase):
     def setUp(self):
@@ -50,7 +50,12 @@ class TestJackTokenizer(unittest.TestCase):
         self.assertFalse(self.tokenizer._valid_identifier("abc\\3"), "Said identifier with backslash was valid")
 
     def test_tokenizer_advance(self):
-        pass
+        while self.tokenizer.has_more_tokens():
+            self.tokenizer.advance()
+            print(self.tokenizer.current_token)
+
+        
+        
 
     def tearDown(self):
         self.tokenizer.close()
