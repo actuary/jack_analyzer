@@ -2,6 +2,11 @@ import jack_tokenizer as jt
 
 class CompileError(Exception):
     pass
+
+JACK_OPS = ["+", "-", "*", "/", "&", "|", "<", ">", "="]
+JACK_UNARY_OPS = ["-", "~"]
+JACK_KEYWORD_CONSTS = ["true", "false", "null", "this"]
+
 class CompilationEngine:
     def __init__(jack_filepath, output_filepath):
         self.jack_filepath = jack_filepath
@@ -28,13 +33,14 @@ class CompilationEngine:
         self.output_file.write(f"</{tag_name}>\n")
             
     def compile_class(self):
-        
-        self.output_file.write("<class>\n")
-        self.tokenizer.advance()
+        self.write_open_tag("class")
+
         self.write_terminal_tag() #class
-        self.tokenizer.advance() 
+        self.tokenizer.advance()
+        
         self.write_terminal_tag() #className
-        self.tokenizer.advance()  
+        self.tokenizer.advance()
+        
         self.write_terminal_tag() # {
         self.tokenizer.advance()
 
@@ -46,20 +52,24 @@ class CompilationEngine:
 
         self.write_terminal_tag() # }
             
-        self.output_file.write("</class>\n")
+        self.write_close_tag("class")
 
     def compile_class_var_dec(self):
         self.write_open_tag("classVarDec")
+        
         self.write_terminal_tag() # keyword
         self.tokenizer.advance()
+        
         self.write_terminal_tag() # identifier or keyword
         self.tokenizer.advance()
+        
         self.write_terminal_tag() # varName
         self.tokenizer.advance()
 
         while self.tokenizer.current_token == ",":
             self.write_terminal_tag() # ,
             self.tokenizer.advance()
+            
             self.write_terminal_tag() # varName
             self.tokenizer.advance()
 
@@ -70,12 +80,16 @@ class CompilationEngine:
     
     def compile_subroutine(self):
         self.write_open_tag("subroutineDec")
+        
         self.write_terminal_tag() # keyword
         self.tokenizer.advance()
+        
         self.write_terminal_tag() #void/type
         self.tokenizer.advance()
+        
         self.write_terminal_tag() # subroutineName
-        self.tokenizer.advance() 
+        self.tokenizer.advance()
+        
         self.write_terminal_tag() # (
         self.tokenizer.advance()
 
@@ -94,19 +108,22 @@ class CompilationEngine:
 
         self.write_terminal_tag() # type
         self.tokenizer.advance()
+        
         self.write_terminal_tag() # varName
         self.tokenizer.advance()
 
         while self.tokenizer.current_token == ",":
-            self.write_terminal_tag()
+            self.write_terminal_tag() # ,
             self.tokenizer.advance()
-            self.write_terminal_tag()
+            
+            self.write_terminal_tag() # varName
             self.tokenizer.advance()
 
         self.write_close_tag("parameterList")
 
     def compile_subroutine_body(self):
         self.write_open_tag("subroutineBody")
+        
         self.write_terminal_tag() # {
         self.tokenizer.advance()
 
@@ -118,37 +135,244 @@ class CompilationEngine:
 
         self.write_terminal_tag() # }
         self.tokenizer.advance()
+        
         self.write_close_tag("subroutineBody")
     
     def compile_var_dec(self):
-        pass
+        self.write_open_tag("varDec")
+        
+        self.write_terminal_tag() # var
+        self.tokenizer.advance()
+        
+        self.write_terminal_tag() # type
+        self.tokenizer.advance()
+        
+        self.write_terminal_tag() # varName
+        self.tokenizer.advance()
+        
+        while self.tokenizer.current_token == ",":
+            self.write_terminal_tag() #varName
+            self.tokenizer.advance()
+
+        self.write_terminal_tag() #;
+        self.tokenizer.advance()
+        
+        self.write_close_tag("varDec")
+        
 
     def compile_statements(self):
-        pass
+        self.write_open_tag("statements")
+
+        while self.current_token in ["let", "if", "while", "do", "return"]:
+            if self.tokenizer.current_token == "let":
+                self.compile_let()
+            elif self.tokenizer.current_token == "do":
+                self.compile_do()
+            elif self.tokenizer.current_token == "while":
+                self.compile_while()
+            elif self.tokenizer.current_token == "if":
+                self.compile_if()
+            elif self.tokenizer.current_token == "return":
+                self.compile_return()
+            else:
+                raise CompileError
+
+        self.write_close_tag("statements")
 
     def compile_do(self):
-        pass
+        self.write_open_tag("do")
+        
+        self.write_terminal_tag() #do
+        self.tokenizer.advance()
+
+        self.write_terminal_tag() #subroutineCall
+        self.tokenizer.advance()
+
+        self.write_terminal_tag() #;
+        self.tokenizer.advance()
+        
+        self.write_close_tag("do")
 
     def compile_let(self):
-        pass
+        self.write_open_tag("let")
+
+        self.write_terminal_tag() #let
+        self.tokenizer.advance()
+
+        self.write_terminal_tag() #varName
+        self.tokenizer.advance()
+
+        if self.tokenizer.current_token == "[":
+            self.write_terminal_tag() #[
+            self.tokenizer.advance()
+
+            self.compile_expression() #expression
+
+            self.write_terminal_tag() #]
+            self.tokenizer.advance()
+        
+        self.write_terminal_tag() #=
+        self.tokenizer.advance()
+        
+        self.compile_expression()
+        
+        self.write_terminal_tag() #;
+        self.tokenizer.advance()
+        
+        self.write_close_tag("let")
 
     def compile_while(self):
-        pass
+        self.write_open_tag("while")
 
+        self.write_terminal_tag() #while
+        self.tokenizer.advance()
+
+        self.write_terminal_tag() #(
+        self.tokenizer.advance()
+
+        self.compile_expression()
+
+        self.write_terminal_tag() #)
+        self.tokenizer.advance()
+
+        self.write_terminal_tag() #{
+        self.tokenizer.advance()
+
+        self.compile_statements()
+
+        self.write_terminal_tag() #}
+        self.tokenizer.advance()
+        
+        self.write_close_tag("while")
+        
     def compile_return(self):
-        pass
+        self.write_open_tag("return")
+
+        self.write_terminal_tag() #return
+        self.tokenizer.advance()
+
+        if self.tokenizer.current_token != ";":
+            self.compile_expression()
+
+        self.write_terminal_tag() #;
+        self.tokenizer.advance()
+        
+        self.write_close_tag("return")
 
     def compile_if(self):
-        pass
+        self.write_open_tag("if")
 
-    def compile_expresson(self):
-        pass
+        self.write_terminal_tag() #if
+        self.tokenizer.advance()
 
-    def compile_term(self):
-        pass
+        self.write_terminal_tag() #(
+        self.tokenizer.advance()
+
+        self.compile_expression()
+
+        self.write_terminal_tag() #)
+        self.tokenizer.advance()
+
+        self.write_terminal_tag() #{
+        self.tokenizer.advance()
+
+        self.compile_statements()
+
+        self.write_terminal_tag() #}
+        self.tokenizer.advance()
+
+        if self.tokenizer.current_token == "else":
+            self.write_terminal_tag() #else
+            self.tokenizer.advance()
+
+            self.write_terminal_tag() #{
+            self.tokenizer.advance()
+
+            self.compile_statements()
+
+            self.write_terminal_tag() #}
+            self.tokenizer.advance()
+        
+        self.write_close_tag("if")
 
     def compile_expression(self):
-        pass
+        self.write_open_tag("expression")
+
+        self.compile_term()
+
+        if self.current_token in JACK_OPS:
+            self.write_terminal_tag() # op
+            self.tokenizer.advance()
+
+            self.compile_term()
+        
+        
+        self.write_close_tag("expression")
+
+    def compile_term(self):
+        self.write_open_tag("term")
+
+        if self.tokenizer.current_token in JACK_UNARY_OPS:
+            self.write_terminal_tag() # ~ or -
+            self.tokenizer.advance()
+
+        if self.tokenizer.current_token == "(":
+            self.write_terminal_tag() #(
+            self.tokenizer.advance()
+
+            self.compile_expression
+
+            self.write_terminal_tag() #)
+            self.tokenizer.advance()
+            
+        else:
+            self.write_terminal_tag() #varName
+            self.tokenizer.advance()
+
+            if self.tokenizer.current_token == "(":
+                # subroutine Call
+                self.write_terminal_tag() #(
+                self.tokenizer.advance()
+                
+                self.compile_expression()
+
+                while self.tokenizer.current_token == ",":
+                    self.compile_expression()
+
+                self.write_terminal_tag() #)
+                self.tokenizer.advance()
+
+            elif self.tokenizer.current_token == ".":
+                # subroutineCall - class/var
+                self.write_terminal_tag() #.
+                self.tokenizer.advance()
+
+                self.write_terminal_tag() #subroutineName
+                self.tokenizer.advance()
+
+                self.write_terminal_tag() #(
+                self.tokenizer.advance()
+                
+                self.compile_expression()
+
+                while self.tokenizer.current_token == ",":
+                    self.compile_expression()
+
+                self.write_terminal_tag() #)
+                self.tokenizer.advance()
+                
+            elif self.tokenizer.current_token == "[":
+                # array expression
+                self.write_terminal_tag() #[
+                self.tokenizer.advance()
+
+                self.compile_expression()
+
+                self.write_terminal_tag() #]
+                self.tokenizer.advance()
+        
+        self.write_close_tag("term")
+
     
 
 if __name__ == "__main__":
