@@ -176,9 +176,7 @@ class CompilationEngine:
         self.write_open_tag("doStatement")
 
         self.write_tag_and_advance() #do
-        
         self.compile_subroutine_call()
-
         self.write_tag_and_advance() #;
         
         self.write_close_tag("doStatement")
@@ -195,9 +193,7 @@ class CompilationEngine:
             self.write_tag_and_advance() #]
         
         self.write_tag_and_advance() #=
-        
         self.compile_expression()
-        
         self.write_tag_and_advance() #;
         
         self.write_close_tag("letStatement")
@@ -254,7 +250,6 @@ class CompilationEngine:
         if self.tokenizer.current_token in JACK_OPS:
             self.write_tag_and_advance() #op
             self.compile_term()
-        
         
         self.write_close_tag("expression")
 
