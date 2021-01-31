@@ -3,6 +3,7 @@ import sys
 import re
 from enum import Enum
 import pdb
+import io
 
 class InvalidToken(Exception):
     def __init(self, token):
@@ -16,29 +17,6 @@ class JackTokenType(Enum):
     IDENTIFIER = 3
     INT_CONST = 4
     STRING_CONST = 5
-
-class JackKeyword(Enum):
-    CLASS = 1
-    METHOD = 2
-    FUNCTION = 3
-    CONSTRUCTOR = 4
-    INT = 5
-    BOOLEAN = 6
-    CHAR = 7
-    VOID = 8
-    VAR = 9
-    STATIC = 10
-    FIELD = 11
-    LET = 12
-    DO = 13
-    IF = 14
-    ELSE = 16
-    WHILE = 17
-    RETURN = 18
-    TRUE = 19
-    FALSE = 20
-    NULL = 21
-    THIS = 23
 
 JACK_KEYWORDS = ["class", "constructor", "function", "method",
                  "field", "static", "var", "int", "char",
@@ -54,60 +32,75 @@ class JackTokenizer:
     identifier_matcher = re.compile("^[a-zA-Z_][a-zA-Z0-9\_]*$")
     
     def __init__(self, jack_filepath):
-        self.jack_file = open(jack_filepath, 'r')
+        self.jack_file = io.open(jack_filepath, "rb")
         self.is_more_tokens = True
+        self.current_token = ""
+
     def has_more_tokens(self):
         return self.is_more_tokens
 
-    def advance(self):
+    def get_next_char(self):
         c = self.jack_file.read(1)
-        if c == "/":
-            self._advance_past_comments()
-            self.advance()
+        return c.decode("utf-8")
+
+    def go_back_chars(self, back_steps = 1):
+       self.jack_file.seek(self.jack_file.tell() - back_steps, os.SEEK_SET) 
+
+    def advance(self):
+        c = self.get_next_char()
+        if not c:
+            self.is_more_tokens = False
+        elif c == "/":
+            is_comment = self._advance_past_comments()
+            if is_comment:
+                self.advance()
+            else:
+                self.current_token = c
         elif c.isspace():
             self.advance()
         elif c == '"':
             self.current_token = c
-            c = self.jack_file.read(1)
+            c = self.get_next_char()
             while c != '"':
                 self.current_token += c
-                c = self.jack_file.read(1)
+                c = self.get_next_char()
             self.current_token += c
         # catch symbols
         elif c in JACK_SYMBOLS:
             self.current_token = c
-        elif c and not c.isspace():
+        else:
             # otherwise it's gotta be an identifer, const or keyword
             # so eat that up
             self.current_token = ""
             while c and c not in JACK_SYMBOLS and not c.isspace():
                 self.current_token += c
-                c = self.jack_file.read(1)
+                c = self.get_next_char()
             if c:
-                self.jack_file.seek(self.jack_file.tell() - 1, os.SEEK_SET)
-            
-        if not c:
-            self.is_more_tokens = False
+                self.go_back_chars(1)
 
     def _advance_past_comments(self):
-        c = self.jack_file.read(1)
+        c = self.get_next_char()
         # in-line comment
+        is_comment = True
         if c == "/":
             # in-line comment
             while c and c != "\n":
-                c = self.jack_file.read(1)
+
+                c = self.get_next_char()
         elif c == "*":
             # comment until closing ignore diff between it and API comment
-            c = self.jack_file.read(1)
+            c = self.get_next_char()
             while c:
                 if c == "*":
-                    c = self.jack_file.read(1)
+                    c = self.get_next_char()
                     if c == "/":
                         break
                 else:
-                    c = self.jack_file.read(1)
+                    c = self.get_next_char()
         else:
-            self.jack_file.seek(self.jack_file.tell() - 1, os.SEEK_SET)
+            is_comment = False
+            self.go_back_chars(1)
+        return is_comment
 
                     
     def _set_current_token(self, token):
@@ -131,21 +124,6 @@ class JackTokenizer:
     def _valid_identifier(self, token):
         return token != "" and JackTokenizer.identifier_matcher.match(token)
         
-    def key_word(self):
-        return JackKeyWord.CLASS
-
-    def symbol(self):
-        return ""
-
-    def identifier(self):
-        return ""
-
-    def int_val(self):
-        return 0
-
-    def string_val(self):
-        return ""
-    
     def close(self):
         self.jack_file.close()
 

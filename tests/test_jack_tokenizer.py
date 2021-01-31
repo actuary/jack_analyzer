@@ -49,14 +49,6 @@ class TestJackTokenizer(unittest.TestCase):
     def test_valid_identifier_wrong2(self):
         self.assertFalse(self.tokenizer._valid_identifier("abc\\3"), "Said identifier with backslash was valid")
 
-    def test_tokenizer_advance(self):
-        while self.tokenizer.has_more_tokens():
-            self.tokenizer.advance()
-            print(self.tokenizer.current_token)
-
-        
-        
-
     def tearDown(self):
         self.tokenizer.close()
 
