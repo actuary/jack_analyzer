@@ -139,6 +139,9 @@ class CompilationEngine:
         while self.tokenizer.current_token == ",":
             self.write_terminal_tag() # ,
             self.tokenizer.advance()
+
+            self.write_terminal_tag() # type
+            self.tokenizer.advance()
             
             self.write_terminal_tag() # varName
             self.tokenizer.advance()

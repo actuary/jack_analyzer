@@ -21,7 +21,7 @@ class JackTokenType(Enum):
 JACK_KEYWORDS = ["class", "constructor", "function", "method",
                  "field", "static", "var", "int", "char",
                  "boolean", "void", "true", "false", "null",
-                 "let", "do", "if", "else", "while", "return"]
+                 "let", "do", "if", "else", "while", "return", "this"]
 
 JACK_SYMBOLS = ["{", "}", "(", ")", "[", "]", ".", ",", ";",
                 "+", "-", "*", "/", "&", "|", "<", ">", "=",
