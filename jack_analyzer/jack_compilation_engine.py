@@ -340,11 +340,13 @@ class CompilationEngine:
             self.write_terminal_tag() # ~ or -
             self.tokenizer.advance()
 
-        if self.tokenizer.current_token == "(":
+            self.compile_term()
+
+        elif self.tokenizer.current_token == "(":
             self.write_terminal_tag() #(
             self.tokenizer.advance()
 
-            self.compile_expression
+            self.compile_expression()
 
             self.write_terminal_tag() #)
             self.tokenizer.advance()
