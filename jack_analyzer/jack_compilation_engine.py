@@ -94,7 +94,8 @@ class CompilationEngine:
             self.tokenizer.advance()
 
         self.write_terminal_tag() # ;
-        self.advance()
+        self.tokenizer.advance()
+        
         self.write_close_tag("classVarDec")
             
     
@@ -407,6 +408,9 @@ class CompilationEngine:
             self.compile_expression()
 
             while self.tokenizer.current_token == ",":
+                self.write_terminal_tag() #,
+                self.tokenizer.advance()
+                
                 self.compile_expression()
 
         self.write_close_tag("expressionList")
