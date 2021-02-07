@@ -46,6 +46,10 @@ class JackTokenizer:
     def go_back_chars(self, back_steps = 1):
        self.jack_file.seek(self.jack_file.tell() - back_steps, os.SEEK_SET) 
 
+    def advance_n(self, n):
+        for i in range(n):
+            self.advance()
+            
     def advance(self):
         c = self.get_next_char()
         if not c:

@@ -6,7 +6,7 @@ import jack_compilation_engine as jce
 from pathlib import Path
 import glob
 
-class JackAnalyzer:
+class JackCompiler:
     def __init__(self, jack_file):
         self.jack_file = jack_file
         if os.path.isdir(jack_file):
@@ -16,16 +16,15 @@ class JackAnalyzer:
 
     def main(self):
         for file in self.jack_files:
-            out_file = os.path.splitext(file)[0] + ".xml"
+            out_file = os.path.splitext(file)[0] + ".vm"
             tokenizer = jt.JackTokenizer(file)
             compilation_engine = jce.CompilationEngine(out_file, tokenizer)
             compilation_engine.main()
-            #compilation_engine.test()
             tokenizer.close()
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python jack_analyzer.py <filename.jack> | <directory>")
+        print("Usage: python jack_compiler.py <filename.jack> | <directory>")
         sys.exit(0)
     else:
         jack_file = sys.argv[1]
@@ -33,5 +32,5 @@ if __name__ == "__main__":
             print("File not found!")
             sys.exit(0)
     
-    analyzer = JackAnalyzer(jack_file)
-    analyzer.main()
+    compiler = JackCompiler(jack_file)
+    compiler.main()
